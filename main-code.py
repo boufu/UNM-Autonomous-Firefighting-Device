@@ -7,31 +7,42 @@
 # ...because I need to download the packages on the RBPi hardware not on my own laptop.
 import RPi.GPIO as GPIO # import GPi.GPIO package and alias it as GPIO
 from gpiozero import Servo # import servo from gpiozero module 
+from gpiozero import DistanceSensor # import distance sensor from gpiozero module
 import time
 
 # initializing pins (signal pins)
-ultrasonic_pin_1 = 7  
-ultrasonic_pin_2 = 8
-ultrasonic_pin_3 = 10
-ultrasonic_pin_4 = 11
+ultrasonic_pin_1_trig = 7  
+ultrasonic_pin_1_echo = 8 
+ultrasonic_pin_2_trig = 10
+ultrasonic_pin_2_echo = 11
+ultrasonic_pin_3_trig = 12
+ultrasonic_pin_3_echo = 13
+ultrasonic_pin_4_trig = 15
+ultrasonic_pin_4_echo = 16
 
-infrared_pin_1 = 12
-infrared_pin_2 = 13
-infrared_pin_3 = 15
-infrared_pin_4 = 16 
 
-servo_pin = 18
+infrared_pin_1 = 
+infrared_pin_2 = 
+infrared_pin_3 =
+infrared_pin_4 = 
 
-motor_pin_1 = 19
-motor_pin_2 = 21
+servo_pin = 
+
+motor_pin_1 = 
+motor_pin_2 = 
 
 # initializing the GPIO pins as input/output
 GPIO.setmode(GPIO.BOARD)  # Use physical pin numbers 
 
-GPIO.setup(ultrasonic_pin_1, GPIO.IN) # setting ultrasonic pins as input
-GPIO.setup(ultrasonic_pin_2, GPIO.IN)
-GPIO.setup(ultrasonic_pin_3, GPIO.IN)
-GPIO.setup(ultrasonic_pin_4, GPIO.IN)
+GPIO.setup(ultrasonic_pin_1_echo, GPIO.IN) # setting ultrasonic echo pins as input
+GPIO.setup(ultrasonic_pin_2_echo, GPIO.IN)
+GPIO.setup(ultrasonic_pin_3_echo, GPIO.IN)
+GPIO.setup(ultrasonic_pin_4_echo, GPIO.IN)
+
+GPIO.setup(ultrasonic_pin_1_trig, GPIO.OUT) # setting ultrasonic trigger pins as output
+GPIO.setup(ultrasonic_pin_2_trig, GPIO.OUT)
+GPIO.setup(ultrasonic_pin_3_trig, GPIO.OUT)
+GPIO.setup(ultrasonic_pin_4_trig, GPIO.OUT)
 
 GPIO.setup(ultrasonic_pin_1, GPIO.IN) # setting infrared pins as input
 GPIO.setup(ultrasonic_pin_2, GPIO.IN)
