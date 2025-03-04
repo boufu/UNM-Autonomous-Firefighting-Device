@@ -14,6 +14,7 @@ import RPi.GPIO as GPIO # import GPi.GPIO package and alias it as GPIO
 from gpiozero import Servo # import servo from gpiozero module 
 from gpiozero import DistanceSensor # import distance sensor from gpiozero module
 import time
+import spidev # import package to communicate with SPI devices 
 
 # ===========================================================================================
 # defining variables (pins in this case)
@@ -75,13 +76,13 @@ GPIO.setup(motor_pin_1, GPIO.OUT) # setting motor pins as output
 GPIO.setup(motor_pin_2, GPIO.OUT)
 
 # ===========================================================================================
-# [WIP] Fire Extinguishing (Nozzle & Servo)
+# Fire Extinguishing (Nozzle & Servo)
 # ===========================================================================================
 # initialize PWM (pulse-width modulation - PWM turns power on and off quickly; the longer it stays on ON, the higher the power)
 servo = GPIO.PWM(servo_pin, 50) # 50 Hz frequency PWM
 servo.start(0) # start with a neutral position
 
-# defining functions
+# define functions
 def set_servo_angle(angle):
     """Converts an angle to a duty cycle and moves the servo"""
     duty_cycle = 2 + (angle / 18)  # convert angle to duty cycle (approximate)
@@ -91,7 +92,7 @@ def set_servo_angle(angle):
 def extinguishing_activate(sweep_angle = 60, cycles = 3): # sweep_angle = angles to sweep for per cycle; cycles = number of cycles to sweep
   """Turns on pump and sweeps servo motor"""
   try:
-    print("Turning on water pump...")
+    print("\nTurning on water pump...")
     GPIO.output(pump_pin, GPIO.HIGH)  # turn on pump
     
     for i in range(cycles):
@@ -103,32 +104,40 @@ def extinguishing_activate(sweep_angle = 60, cycles = 3): # sweep_angle = angles
 
 def extinguishing_stop():
   """Turns off pump and returns servo motor to neutral position"""
+  print("\nTurning off water pump...")
   GPIO.output(pump_pin, GPIO.LOW) # turns off water pump
   servo.ChangeDutyCycle(0)  # stop sending PWM signals
 
 # ===========================================================================================
 # [WIP] Fire Detection System # need an analog-digital converter if want to read IR value range
 # ===========================================================================================
-# read IR sensors' value 
+# create fire detection flag
+fire_detected = False # initial flag's state
 
-
-
-
-
+# define functions
+def fire_detection_loop():
+  """Read IR sensors and compare against threshold value to detect fire and set off a flag"""
+  pass # need to do the ADC thingy with spidev first i believe
+  pass # read IR sensors
+  pass # set condition that changes the fire_detected flag to either True or False
+  
 
 
 # ===========================================================================================
 # [WIP] Mobility System 
 # ===========================================================================================
-
+# defining distance threshold
 distance_threshold = 0.5 # in meters
 
-ultrasonic_1 = DistanceSensor(US_pin_1_echo, US_pin_1_trig) # setting variables ultrasonic_<> as a distance sensor
+# setting variables ultrasonic_<> as a distance sensor
+ultrasonic_1 = DistanceSensor(US_pin_1_echo, US_pin_1_trig) 
 ultrasonic_2 = DistanceSensor(US_pin_2_echo, US_pin_2_trig)
 ultrasonic_3 = DistanceSensor(US_pin_3_echo, US_pin_4_trig)
 ultrasonic_4 = DistanceSensor(US_pin_4_echo, US_pin_4_trig)
 
+# define functions
 def mobility_system():
+  """Basic autonomous navigation of the device"""
   if ultrasonic_1.distance >= distance_threshold:
     pass # device moves forward #
   elif ultrasonic_2.distance >= distance_threshold:
@@ -141,4 +150,20 @@ def mobility_system():
     pass # sound an alarm #
 
 
+# ===========================================================================================
+# [WIP] Main Loop
+# ===========================================================================================
+
+try:
+  while True:
+    if fire_detected == False: # if fire is not detected
+      mobility_system() # mobility system starts
+      fire_detection_loop() # and fire detection follows suit
+    elif fire_detected == True: # however, the moment a fire is detected
+      while fire_detected == True: # while the fire_detected flag is True
+        extinguishing_activate() # the extinguishment will happen
+        fire_detection_loop() # and the fire detection will follow suit
+      extinguishing_stop() # when the fire_detected flag turns False, while loop breaks and extinguishment stops 
+except KeyboardInterrupt:
+  print("\nLoop stopped by user.")
 
