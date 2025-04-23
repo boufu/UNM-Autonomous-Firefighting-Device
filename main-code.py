@@ -18,6 +18,10 @@ from gpiozero import Servo # import servo from gpiozero module
 from gpiozero import DistanceSensor # import distance sensor from gpiozero module
 import time
 import spidev # import package to communicate with SPI devices 
+import board # import library that gives names to the RB Pi's physical pins
+import busio # import library that enables I2C communication
+from adafruit_ads1x15.analog_in import Analogin # import the analogin library from adafruit
+import adafruit_ads1x15.ads1115 as ADS # give the adafruit library for ads1115 an alias called ADS
 
 # ===========================================================================================
 # defining variables (pins in this case)
@@ -30,9 +34,9 @@ import spidev # import package to communicate with SPI devices
 #           # # # # # #
 #                3
 
-servo_pin =  # pin for the nozzle's servo motor 
+servo_pin = 33 # pin for the nozzle's servo motor 
 
-pump_pin =  # pin for the water pump
+pump_pin = 7 # pin for the water pump
 
 IR_pin_1 =  # pins for the infrared sensors
 IR_pin_2 = 
@@ -96,7 +100,7 @@ def set_servo_angle(angle):
     servo.ChangeDutyCycle(duty_cycle)
     time.sleep(1)  # give the servo time to move
 
-def extinguishing_activate(sweep_angle = 60, cycles = 3): # sweep_angle = angles to sweep for per cycle; cycles = number of cycles to sweep
+def servo_start(sweep_angle = 60, cycles = 3): # sweep_angle = angles to sweep for per cycle; cycles = number of cycles to sweep
   """Turns on pump and sweeps servo motor"""
   try:
     print("\nTurning on water pump...")
@@ -109,29 +113,15 @@ def extinguishing_activate(sweep_angle = 60, cycles = 3): # sweep_angle = angles
   except KeyboardInterrupt: # stop function if there's any keyboard input
     pass  # allow stopping with ctrl+c
 
-def extinguishing_stop():
+def servo_stop():
   """Turns off pump and returns servo motor to neutral position"""
   print("\nTurning off water pump...")
   GPIO.output(pump_pin, GPIO.LOW) # turns off water pump
   servo.ChangeDutyCycle(0)  # stop sending PWM signals
 
-# ===========================================================================================
-# [WIP] Fire Detection System # need an analog-digital converter if want to read IR value range
-# ===========================================================================================
-# create fire detection flag
-fire_detected = False # initial flag's state
-
-# define functions
-def fire_detection_loop():
-  """Read IR sensors and compare against threshold value to detect fire and set off a flag"""
-  pass # need to do the ADC thingy with spidev first i believe
-  pass # read IR sensors
-  pass # set condition that changes the fire_detected flag to either True or False
-  
-
 
 # ===========================================================================================
-# [WIP] Mobility System 
+# Mobility System 
 # ===========================================================================================
 # defining distance threshold
 distance_threshold = 0.5 # in meters
@@ -203,6 +193,100 @@ def mobility_system():
   else:
     pass # sound an alarm #
 
+# ===========================================================================================
+# [WIP] Fire Detection System # need an analog-digital converter if want to read IR value range
+# ===========================================================================================
+# create fire detection flag
+fire_detected = False # initial flag's state
+ir_threshold = 1000 # ir value threshold
+
+# define functions
+def fire_detection_loop():
+  """Read IR sensors and compare against threshold value to detect fire and set off a flag"""
+  pass # need to do the ADC thingy with spidev first i believe
+
+  pass # read IR sensors
+
+  pass # set condition that changes the fire_detected flag to either True or False
+  
+
+
+def fire_extinguishing_start():
+  """Function that starts the fire extinguishing part"""
+  ir_sensor_array = [ir_sensor_1, ir_sensor_2, ir_sensor_3, ir_sensor_4]
+  ir_sensor_array_sorted = sorted(ir_sensor_array, reverse = True)
+
+  if ir_sensor_2 == ir_sensor_array_sorted[0]:
+    ir_check = False # set a flag called ir_check to break while loop when condition is fulfilled
+
+    while ir_check == False:
+      old_ir_sensor_1 = ir_sensor_1
+      turn_right()
+      pass # read new ir values 
+      if ir_sensor_1 > old_ir_sensor_1:
+        pass # skip
+      else:
+        ir_check = True
+    
+    ir_check = False
+
+    while ir_check == False:
+      old_ir_sensor_1 = ir_sensor_1
+      turn_left(duration = 0.02)
+      pass # read new ir values
+      if ir_sensor_1 > old_ir_sensor_1:
+        pass # skip
+      else:
+        ir_check = True
+
+    ir_check = False
+
+    while ir_check == False:
+      old_ir_sensor_1 = ir_sensor_1
+      servo_start()
+      time.sleep(0.3)
+      servo_stop()
+      pass # read new ir values
+      if ir_sensor_1 >= ir_threshold:
+        pass # skip
+      else:
+        ir_check = True
+
+  else:
+    ir_check = False # set a flag called ir_check to break while loop when condition is fulfilled
+
+    while ir_check == False:
+      old_ir_sensor_1 = ir_sensor_1
+      turn_left()
+      pass # read new ir values 
+      if ir_sensor_1 > old_ir_sensor_1:
+        pass # skip
+      else:
+        ir_check = True
+
+    ir_check = False
+
+    while ir_check == False:
+      old_ir_sensor_1 = ir_sensor_1
+      turn_right(duration = 0.02)
+      pass # read new ir values
+      if ir_sensor_1 > old_ir_sensor_1:
+        pass # skip
+      else:
+        ir_check = True
+
+    ir_check = False
+
+    while ir_check == False:
+      old_ir_sensor_1 = ir_sensor_1
+      servo_start()
+      time.sleep(0.3)
+      servo_stop()
+      pass # read new ir values
+      if ir_sensor_1 >= ir_threshold:
+        pass # skip
+      else:
+        ir_check = True 
 
 # ===========================================================================================
 # [WIP] Main Loop
@@ -215,9 +299,9 @@ try:
       fire_detection_loop() # and fire detection follows suit
     elif fire_detected == True: # however, the moment a fire is detected
       while fire_detected == True: # while the fire_detected flag is True
-        extinguishing_activate() # the extinguishment will happen
+        fire_extinguishing_start() # the extinguishment will happen
         fire_detection_loop() # and the fire detection will follow suit
-        extinguishing_stop() # when the fire_detected flag turns False, while loop breaks and extinguishment stops 
+      servo_stop() # when the fire_detected flag turns False, while loop breaks and extinguishment stops 
 except KeyboardInterrupt:
   print("\nLoop stopped by user.")
 
