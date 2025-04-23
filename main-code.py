@@ -4,9 +4,12 @@
 # python libraries/packages installs and imports
 # ===========================================================================================
 
-# installing python libraries (need to install in the RBPi using its bash CLI) 
+# installing python libraries (need to install in the RBPi using its bash CLI)
+'''README'''
   # pip install RPi.GPIO
   # pip install gpiozero
+  # sudo pip3 install spidev
+
 
 # importing libraries - might show yellow squiggly lines below...
 # ...because I need to download the packages on the RBPi hardware, not on my own laptop.
@@ -45,8 +48,10 @@ US_pin_3_echo =
 US_pin_4_trig = 
 US_pin_4_echo = 
 
-motor_pin_1 = # pins for the motor
-motor_pin_2 = 
+motor_pin_left_PWM = # pins for the motor
+motor_pin_left_DIR = 
+motor_pin_right_PWM = 
+motor_pin_right_DIR = 
 
 # ===========================================================================================
 # identifying the GPIO pins as input/output
@@ -72,8 +77,10 @@ GPIO.setup(US_pin_2_trig, GPIO.OUT)
 GPIO.setup(US_pin_3_trig, GPIO.OUT)
 GPIO.setup(US_pin_4_trig, GPIO.OUT)
 
-GPIO.setup(motor_pin_1, GPIO.OUT) # setting motor pins as output
-GPIO.setup(motor_pin_2, GPIO.OUT)
+GPIO.setup(motor_pin_left_PWM, GPIO.OUT) # setting motor pins PWM and DIR as output
+GPIO.setup(motor_pin_left_DIR, GPIO.OUT)
+GPIO.setup(motor_pin_right_PWM, GPIO.OUT)
+GPIO.setup(motor_pin_right_DIR, GPIO.OUT)
 
 # ===========================================================================================
 # Fire Extinguishing (Nozzle & Servo)
@@ -135,17 +142,64 @@ ultrasonic_2 = DistanceSensor(US_pin_2_echo, US_pin_2_trig)
 ultrasonic_3 = DistanceSensor(US_pin_3_echo, US_pin_4_trig)
 ultrasonic_4 = DistanceSensor(US_pin_4_echo, US_pin_4_trig)
 
+# initialize PWM for motor PWM pins
+motor_left_PWM = GPIO.PWM(motor_pin_left_PWM, 200) # 200 Hz PWM
+motor_right_PWM = GPIO.PWM(motor_pin_right_PWM, 200) # 200 Hz PWM
+motor_left_PWM.start(0) # start at neutral position
+motor_right_PWM.start(0) # start at neutral position
+
 # define functions
+def stop_motors():
+  """Function to stop motors"""
+  motor_left_PWM.ChangeDutyCycle(0)
+  motor_right_PWM.ChangeDutyCycle(0)
+
+def move_forward(speed=70, duration=0.2):
+  """Function to move both motors in the forward direction"""
+  GPIO.output(motor_pin_left_DIR, GPIO.LOW)
+  GPIO.output(motor_pin_right_DIR, GPIO.LOW)
+  motor_left_PWM.ChangeDutyCycle(speed) # duty cycle is in terms of percentage
+  motor_right_PWM.ChangeDutyCycle(speed)
+  time.sleep(duration)
+  stop_motors()
+
+def move_backward(speed=70, duration=0.2):
+  """Function to move both motors in the reverse direction"""
+  GPIO.output(motor_pin_left_DIR, GPIO.HIGH)
+  GPIO.output(motor_pin_right_DIR, GPIO.HIGH)
+  motor_left_PWM.ChangeDutyCycle(speed)
+  motor_right_PWM.ChangeDutyCycle(speed)
+  time.sleep(duration)
+  stop_motors()
+
+def turn_left(speed=70, duration=0.1):
+  """Function to move left motor in the reverse dir. and right motor in the forward dir."""
+  GPIO.output(motor_pin_left_DIR, GPIO.HIGH)
+  GPIO.output(motor_pin_right_DIR, GPIO.LOW)
+  motor_left_PWM.ChangeDutyCycle(speed)
+  motor_right_PWM.ChangeDutyCycle(speed)
+  time.sleep(duration)
+  stop_motors()
+
+def turn_right(speed=70, duration=0.1):
+  """Function to move right motor in the reverse dir. and the left motor in the forward dir."""
+  GPIO.output(motor_pin_left_DIR, GPIO.LOW)
+  GPIO.output(motor_pin_right_DIR, GPIO.HIGH)
+  motor_left_PWM.ChangeDutyCycle(speed)
+  motor_right_PWM.ChangeDutyCycle(speed)
+  time.sleep(duration)
+  stop_motors()
+
 def mobility_system():
   """Basic autonomous navigation of the device"""
   if ultrasonic_1.distance >= distance_threshold:
-    pass # device moves forward #
-  elif ultrasonic_2.distance >= distance_threshold:
-    pass # device turns left #
+    move_forward # device moves forward #
   elif ultrasonic_4.distance >= distance_threshold:
-    pass # device turns right #
+    turn_left # device turns left #
+  elif ultrasonic_2.distance >= distance_threshold:
+    turn_right # device turns right #
   elif ultrasonic_3.distance >= distance_threshold:
-    pass # reverse device #
+    move_backward # reverse device #
   else:
     pass # sound an alarm #
 
@@ -163,7 +217,7 @@ try:
       while fire_detected == True: # while the fire_detected flag is True
         extinguishing_activate() # the extinguishment will happen
         fire_detection_loop() # and the fire detection will follow suit
-      extinguishing_stop() # when the fire_detected flag turns False, while loop breaks and extinguishment stops 
+        extinguishing_stop() # when the fire_detected flag turns False, while loop breaks and extinguishment stops 
 except KeyboardInterrupt:
   print("\nLoop stopped by user.")
 
