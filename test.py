@@ -1,49 +1,34 @@
 import RPi.GPIO as GPIO
 import time
 
-# Set the GPIO mode to BCM
+servo_pin = 17  # GPIO pin connected to the servo signal wire
+
 GPIO.setmode(GPIO.BCM)
+GPIO.setup(servo_pin, GPIO.OUT)
 
-# Set GPIO pins for the ultrasonic sensor
-TRIG = 17
-ECHO = 18
+# Set PWM to 50Hz (servo motors usually work at 50Hz)
+pwm = GPIO.PWM(servo_pin, 50)
+pwm.start(0)  # Start with pulse off
 
-# Set the TRIG and ECHO pins as output and input
-GPIO.setup(TRIG, GPIO.OUT)
-GPIO.setup(ECHO, GPIO.IN)
-
-# Function to measure the distance
-def get_distance():
-    # Send a pulse to TRIG
-    GPIO.output(TRIG, GPIO.LOW)  # Ensure TRIG is low initially
-    time.sleep(0.1)
-    
-    GPIO.output(TRIG, GPIO.HIGH)  # Send a pulse to TRIG
-    time.sleep(0.00001)           # 10 microsecond pulse
-    GPIO.output(TRIG, GPIO.LOW)   # Stop the pulse
-
-    # Wait for the pulse to return to ECHO
-    while GPIO.input(ECHO) == GPIO.LOW:
-        pulse_start = time.time()
-
-    while GPIO.input(ECHO) == GPIO.HIGH:
-        pulse_end = time.time()
-
-    # Calculate the time difference
-    pulse_duration = pulse_end - pulse_start
-    
-    # Calculate the distance (speed of sound is 34300 cm/s)
-    distance = pulse_duration * 34300 / 2  # Divide by 2 because pulse travels to and from the object
-    
-    return distance
+def set_angle(angle):
+    duty = 2 + (angle / 18)  # Convert angle (0–180) to duty cycle
+    GPIO.output(servo_pin, True)
+    pwm.ChangeDutyCycle(duty)
+    time.sleep(0.5)
+    GPIO.output(servo_pin, False)
+    pwm.ChangeDutyCycle(0)  # Avoid buzzing or jittering
 
 try:
     while True:
-        distance = get_distance()
-        print(f"Distance: {distance:.2f} cm")
-        time.sleep(1)  # Delay between readings
+        set_angle(0)
+        time.sleep(1)
+        set_angle(90)
+        time.sleep(1)
+        set_angle(180)
+        time.sleep(1)
 
 except KeyboardInterrupt:
-    print("Measurement stopped by User")
-    GPIO.cleanup()  # Clean up GPIO settings when exiting the program
+    print("Stopped by User")
+    pwm.stop()
+    GPIO.cleanup()
 
