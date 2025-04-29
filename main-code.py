@@ -15,7 +15,7 @@
 # ...because I need to download the packages on the RBPi hardware, not on my own laptop.
 import RPi.GPIO as GPIO # import GPi.GPIO package and alias it as GPIO
 from gpiozero import Servo # import servo from gpiozero module 
-from gpiozero import DistanceSensor # import distance sensor from gpiozero module
+from gpiozero import Angularservo
 import time
 import spidev # import package to communicate with SPI devices 
 import board # import library that gives names to the RB Pi's physical pins
@@ -62,8 +62,6 @@ motor_pin_right_DIR =
 # ===========================================================================================
 GPIO.setmode(GPIO.BOARD)  # Use physical pin numbers 
 
-GPIO.setup(servo_pin, GPIO.OUT) # setting servo pin as output
-
 GPIO.setup(pump_pin, GPIO.OUT) # setting pump pin as output
 
 GPIO.setup(IR_pin_1, GPIO.IN) # setting infrared pins as input
@@ -89,27 +87,43 @@ GPIO.setup(motor_pin_right_DIR, GPIO.OUT)
 # ===========================================================================================
 # Fire Extinguishing (Nozzle & Servo)
 # ===========================================================================================
-# initialize PWM (pulse-width modulation - PWM turns power on and off quickly; the longer it stays on ON, the higher the power)
-servo = GPIO.PWM(servo_pin, 50) # 50 Hz frequency PWM
-servo.start(0) # start with a neutral position
+# initialize angular servo on pin 33
+servo = AngularServo(33, min_angle=0, max_angle=180, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000)
+servo.angle = 90 # set servo.angle to default position
+time.sleep(1)
 
 # define functions
-def set_servo_angle(angle):
-    """Converts an angle to a duty cycle and moves the servo"""
-    duty_cycle = 2 + (angle / 18)  # convert angle to duty cycle (approximate)
-    servo.ChangeDutyCycle(duty_cycle)
-    time.sleep(1)  # give the servo time to move
 
-def servo_start(sweep_angle = 60, cycles = 3): # sweep_angle = angles to sweep for per cycle; cycles = number of cycles to sweep
-  """Turns on pump and sweeps servo motor"""
+def servo_start():
+  """Function to set the servo motor to control the nozzle and turn on the pump"""
   try:
-    print("\nTurning on water pump...")
-    GPIO.output(pump_pin, GPIO.HIGH)  # turn on pump
-    
-    for i in range(cycles):
-      set_servo_angle(90 + sweep_angle)  # move servo up
-      set_servo_angle(90 - sweep_angle)  # move servo down
+    GPIO.output(pump_pin, GPIO.HIGH) # turn on pump
+    for i in range(3):
+      position = 80
+      counter = 0
 
+      print("Pump and nozzle are enabled!")
+      while counter < 3:
+        position += 20
+        servo.angle = position
+        time.sleep (0.6)
+        counter += 1
+      
+      counter = 0 
+      while counter < 6:
+        position -+ 20
+        servo.angle = position
+        time.sleep(0.6)
+        counter += 1
+      
+      counter = 0 
+      while counter < 3:
+        position +- 20
+        servo.angle = position
+        time.sleep(0.6)
+        counter += 1
+      
+    servo.angle = 90
   except KeyboardInterrupt: # stop function if there's any keyboard input
     pass  # allow stopping with ctrl+c
 
@@ -117,20 +131,14 @@ def servo_stop():
   """Turns off pump and returns servo motor to neutral position"""
   print("\nTurning off water pump...")
   GPIO.output(pump_pin, GPIO.LOW) # turns off water pump
-  servo.ChangeDutyCycle(0)  # stop sending PWM signals
+  servo.angle(90)  # set servo (and nozzle) back to default position
 
 
 # ===========================================================================================
-# Mobility System 
+# [WIP - Motor] Mobility System 
 # ===========================================================================================
 # defining distance threshold
-distance_threshold = 0.5 # in meters
-
-# setting variables ultrasonic_<> as a distance sensor
-ultrasonic_1 = DistanceSensor(US_pin_1_echo, US_pin_1_trig) 
-ultrasonic_2 = DistanceSensor(US_pin_2_echo, US_pin_2_trig)
-ultrasonic_3 = DistanceSensor(US_pin_3_echo, US_pin_4_trig)
-ultrasonic_4 = DistanceSensor(US_pin_4_echo, US_pin_4_trig)
+distance_threshold = 35 # in centimeters
 
 # initialize PWM for motor PWM pins
 motor_left_PWM = GPIO.PWM(motor_pin_left_PWM, 200) # 200 Hz PWM
@@ -139,6 +147,37 @@ motor_left_PWM.start(0) # start at neutral position
 motor_right_PWM.start(0) # start at neutral position
 
 # define functions
+def get_distance(TRIG, ECHO): # TRIG and ECHO are parameters that will need to be replaced when calleds
+  """Function to calculate the distance of an object that a selected US picks up"""
+  # Send a pulse to TRIG
+  GPIO.output(TRIG, GPIO.LOW) # ensure TRIG is low initially
+  time.sleep(0.1)
+
+  GPIO.output(TRIG, GPIO.HIGH) # send a pulse to TRIG
+  time.sleep(0.00001) # 10 microsecond pulse
+  GPIO.output(TRIG, GPIO.LOW) # stop the pulse
+
+  start_time = time.time()
+  while GPIO.input(ECHO) == 0:
+    if time.time() - start_time > 0.05:
+      print("Timeout waiting for Echo to start")
+      return None
+  start = time.time()
+
+  while GPIO.input(ECHO) == 1:
+    if time.time() - start > 0.05:
+      print("Timeout waiting for Echo to end")
+      return None
+  end = time.time()
+
+  # calculate the time difference
+  duration = end - start
+
+  # Calculate the distance (speed of sound is 34300 cm/s)
+  distance = duration * 34300 / 2 # divide by 2 because pulse travels to and fro
+
+  return distance
+
 def stop_motors():
   """Function to stop motors"""
   motor_left_PWM.ChangeDutyCycle(0)
@@ -182,13 +221,13 @@ def turn_right(speed=70, duration=0.1):
 
 def mobility_system():
   """Basic autonomous navigation of the device"""
-  if ultrasonic_1.distance >= distance_threshold:
+  if get_distance(US_pin_1_trig, US_pin_1_echo) >= distance_threshold:
     move_forward # device moves forward #
-  elif ultrasonic_4.distance >= distance_threshold:
+  elif get_distance(US_pin_4_trig, US_pin_4_echo) >= distance_threshold:
     turn_left # device turns left #
-  elif ultrasonic_2.distance >= distance_threshold:
+  elif get_distance(US_pin_2_trig, US_pin_2_echo) >= distance_threshold:
     turn_right # device turns right #
-  elif ultrasonic_3.distance >= distance_threshold:
+  elif get_distance(US_pin_3_trig, US_pin_3_echo) >= distance_threshold:
     move_backward # reverse device #
   else:
     pass # sound an alarm #
