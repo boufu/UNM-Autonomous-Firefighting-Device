@@ -224,7 +224,7 @@ def turn_left(speed=70, duration=0.1):
 
 def turn_right(speed=70, duration=0.1):
   """Function to move right motor in the reverse dir. and the left motor in the forward dir."""
-print("Turning right.")
+  print("Turning right.")
   GPIO.output(motor_pin_left_DIR, GPIO.LOW)
   GPIO.output(motor_pin_right_DIR, GPIO.HIGH)
   motor_left_PWM.ChangeDutyCycle(speed)
