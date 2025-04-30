@@ -1,18 +1,17 @@
-# this is the main code for the firefighting device #
+### this is the main code for the firefighting device which will run upon booting of the Rasberry Pi ###
 
 # ===========================================================================================
 # python libraries/packages installs and imports
 # ===========================================================================================
 
 # installing python libraries (need to install in the RBPi using its bash CLI)
-'''README'''
-  # pip install RPi.GPIO
-  # pip install gpiozero
-  # sudo pip3 install spidev
+  # sudo apt install RPi.GPIO
+  # sudo apt install gpiozero
+  # sudo apt install adafruit...
 
 
 # importing libraries - might show yellow squiggly lines below...
-# ...because I need to download the packages on the RBPi hardware, not on my own laptop.
+# because I need to download the packages on the RBPi hardware, not on my own laptop.
 import RPi.GPIO as GPIO # import GPi.GPIO package and alias it as GPIO
 from gpiozero import Servo # import servo from gpiozero module 
 from gpiozero import Angularservo
@@ -29,10 +28,12 @@ import adafruit_ads1x15.ads1115 as ADS # give the adafruit library for ads1115 a
 #                1
 #           # # # # # # 
 #           #         #
-#        4  #         # 2
+#        4  #         #  2
 #           #         #
 #           # # # # # #
 #                3
+
+print("Initial pins initialization start...")
 
 servo_pin = 33 # pin for the nozzle's servo motor 
 
@@ -57,9 +58,12 @@ motor_pin_left_DIR =
 motor_pin_right_PWM = 
 motor_pin_right_DIR = 
 
+print("... initial pins initialization complete!")
 # ===========================================================================================
 # identifying the GPIO pins as input/output
 # ===========================================================================================
+print ("GPIO pins' INPUT and OUTPUT identification start...")
+
 GPIO.setmode(GPIO.BOARD)  # Use physical pin numbers 
 
 GPIO.setup(pump_pin, GPIO.OUT) # setting pump pin as output
@@ -84,6 +88,7 @@ GPIO.setup(motor_pin_left_DIR, GPIO.OUT)
 GPIO.setup(motor_pin_right_PWM, GPIO.OUT)
 GPIO.setup(motor_pin_right_DIR, GPIO.OUT)
 
+print ("... GPIO pins' INPUT and OUTPUT identification complete!")
 # ===========================================================================================
 # Fire Extinguishing (Nozzle & Servo)
 # ===========================================================================================
@@ -91,18 +96,19 @@ GPIO.setup(motor_pin_right_DIR, GPIO.OUT)
 servo = AngularServo(33, min_angle=0, max_angle=180, min_pulse_width=0.5/1000, max_pulse_width=2.5/1000)
 servo.angle = 90 # set servo.angle to default position
 time.sleep(1)
+print("Servo motor initialized on Pin 33 (board).")
 
 # define functions
-
 def servo_start():
   """Function to set the servo motor to control the nozzle and turn on the pump"""
   try:
+    print("Pump and servo are enabled!")
     GPIO.output(pump_pin, GPIO.HIGH) # turn on pump
     for i in range(3):
+      print(f"\tCurrent servo cycle: {i+1}")
       position = 80
       counter = 0
 
-      print("Pump and nozzle are enabled!")
       while counter < 3:
         position += 20
         servo.angle = position
@@ -122,14 +128,14 @@ def servo_start():
         servo.angle = position
         time.sleep(0.6)
         counter += 1
-      
+    
     servo.angle = 90
   except KeyboardInterrupt: # stop function if there's any keyboard input
-    pass  # allow stopping with ctrl+c
+    print("\nProgram stopped by user.")  # allow stopping with ctrl+c
 
 def servo_stop():
   """Turns off pump and returns servo motor to neutral position"""
-  print("\nTurning off water pump...")
+  print("Pump and servo are disabled!")
   GPIO.output(pump_pin, GPIO.LOW) # turns off water pump
   servo.angle(90)  # set servo (and nozzle) back to default position
 
@@ -146,6 +152,8 @@ motor_right_PWM = GPIO.PWM(motor_pin_right_PWM, 200) # 200 Hz PWM
 motor_left_PWM.start(0) # start at neutral position
 motor_right_PWM.start(0) # start at neutral position
 
+print("The Motors' PWM has been enabled!")
+
 # define functions
 def get_distance(TRIG, ECHO): # TRIG and ECHO are parameters that will need to be replaced when calleds
   """Function to calculate the distance of an object that a selected US picks up"""
@@ -160,13 +168,13 @@ def get_distance(TRIG, ECHO): # TRIG and ECHO are parameters that will need to b
   start_time = time.time()
   while GPIO.input(ECHO) == 0:
     if time.time() - start_time > 0.05:
-      print("Timeout waiting for Echo to start")
+      print("Timeout waiting for Echo to start.")
       return None
   start = time.time()
 
   while GPIO.input(ECHO) == 1:
     if time.time() - start > 0.05:
-      print("Timeout waiting for Echo to end")
+      print("Timeout waiting for Echo to end.")
       return None
   end = time.time()
 
@@ -182,9 +190,11 @@ def stop_motors():
   """Function to stop motors"""
   motor_left_PWM.ChangeDutyCycle(0)
   motor_right_PWM.ChangeDutyCycle(0)
+  print("Motors have been disabled!")
 
 def move_forward(speed=70, duration=0.2):
   """Function to move both motors in the forward direction"""
+  print("Moving forward.")
   GPIO.output(motor_pin_left_DIR, GPIO.LOW)
   GPIO.output(motor_pin_right_DIR, GPIO.LOW)
   motor_left_PWM.ChangeDutyCycle(speed) # duty cycle is in terms of percentage
@@ -194,6 +204,7 @@ def move_forward(speed=70, duration=0.2):
 
 def move_backward(speed=70, duration=0.2):
   """Function to move both motors in the reverse direction"""
+  print("Moving backward.")
   GPIO.output(motor_pin_left_DIR, GPIO.HIGH)
   GPIO.output(motor_pin_right_DIR, GPIO.HIGH)
   motor_left_PWM.ChangeDutyCycle(speed)
@@ -203,6 +214,7 @@ def move_backward(speed=70, duration=0.2):
 
 def turn_left(speed=70, duration=0.1):
   """Function to move left motor in the reverse dir. and right motor in the forward dir."""
+  print("Turning left.")
   GPIO.output(motor_pin_left_DIR, GPIO.HIGH)
   GPIO.output(motor_pin_right_DIR, GPIO.LOW)
   motor_left_PWM.ChangeDutyCycle(speed)
@@ -212,6 +224,7 @@ def turn_left(speed=70, duration=0.1):
 
 def turn_right(speed=70, duration=0.1):
   """Function to move right motor in the reverse dir. and the left motor in the forward dir."""
+print("Turning right.")
   GPIO.output(motor_pin_left_DIR, GPIO.LOW)
   GPIO.output(motor_pin_right_DIR, GPIO.HIGH)
   motor_left_PWM.ChangeDutyCycle(speed)
@@ -235,20 +248,36 @@ def mobility_system():
 # ===========================================================================================
 # [WIP] Fire Detection System # need an analog-digital converter if want to read IR value range
 # ===========================================================================================
+
+# initializing ir threshold
+ir_threshold = 1000 # ir value threshold
+
+# setting up I2C communication
+i2c = busio.I2C(board.SCL, board.SDA)
+print("I2C communication has been set up.")
+# initiate ADS1115
+ads = ADS.ADS1115(i2c)
+print("ADS1115 has been initialized.")
+
+# set up communication between infrared sensors and the ads1115
+ir_sensor_1 = AnalogIn(ads, ADS.P0) # front infrared sensor using pin A0
+ir_sensor_2 = AnalogIn(ads, ADS.P1) # back infrared sensor 2 using pin A1
+ir_sensor_3 = AnalogIn(ads, ADS.P2) # left infrared sensor 3 using pin A2 
+ir_sensor_4 = AnalogIn(ads, ADS.P3) # front infrared sensor 4 using pin A3  
+print("Communication between IR sensors and ADS1115 has been set up.")
+
 # create fire detection flag
 fire_detected = False # initial flag's state
-ir_threshold = 1000 # ir value threshold
 
 # define functions
 def fire_detection_loop():
   """Read IR sensors and compare against threshold value to detect fire and set off a flag"""
-  pass # need to do the ADC thingy with spidev first i believe
+  pass # read the ir sensor's values
 
-  pass # read IR sensors
-
-  pass # set condition that changes the fire_detected flag to either True or False
-  
-
+  if any( > threshold for ir_sensors in [, , , ]): # for all sensos above the threshold, fire_detected flag changes to True, otherwise change to False
+    fire_detected = True
+  else:
+    fire_detected = False
 
 def fire_extinguishing_start():
   """Function that starts the fire extinguishing part"""
@@ -342,5 +371,5 @@ try:
         fire_detection_loop() # and the fire detection will follow suit
       servo_stop() # when the fire_detected flag turns False, while loop breaks and extinguishment stops 
 except KeyboardInterrupt:
-  print("\nLoop stopped by user.")
+  print("\nProgram stopped by user.")
 
