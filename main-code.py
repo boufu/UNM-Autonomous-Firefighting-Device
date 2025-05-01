@@ -16,7 +16,6 @@ import RPi.GPIO as GPIO # import GPi.GPIO package and alias it as GPIO
 from gpiozero import Servo # import servo from gpiozero module 
 from gpiozero import Angularservo
 import time
-import spidev # import package to communicate with SPI devices 
 import board # import library that gives names to the RB Pi's physical pins
 import busio # import library that enables I2C communication
 from adafruit_ads1x15.analog_in import Analogin # import the analogin library from adafruit
@@ -371,5 +370,6 @@ try:
         fire_detection_loop() # and the fire detection will follow suit
       servo_stop() # when the fire_detected flag turns False, while loop breaks and extinguishment stops 
 except KeyboardInterrupt:
+  GPIO.cleanup()
   print("\nProgram stopped by user.")
 
