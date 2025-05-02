@@ -7,7 +7,7 @@ pump_pin = 11
 print("Pins initialized")
 
 # setting up the pins
-GPIO.setmode(GPIO.board)
+GPIO.setmode(GPIO.BOARD)
 GPIO.setup(pump_pin, GPIO.OUT)
 print("Pump pins setup complete!")
 
