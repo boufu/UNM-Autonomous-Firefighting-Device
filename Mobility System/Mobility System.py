@@ -34,7 +34,8 @@ print ("... GPIO pins' INPUT and OUTPUT identification complete!")
 time.sleep(1)
 
 # defining distance threshold
-distance_threshold = 35 # in centimeters
+front_threshold = 80 # in centimeters
+side_threshold = 110
 
 # initialize PWM for motor PWM pins
 motor_left_PWM = GPIO.PWM(motor_pin_left_PWM, 200) # 200 Hz PWM
@@ -82,7 +83,7 @@ def stop_motors():
   motor_right_PWM.ChangeDutyCycle(0)
   print("Both motors have been disabled!")
 
-def move_forward(speed=10, duration=0.3):
+def move_forward(speed=10, duration=0.6):
   """Function to move both motors in the forward direction"""
   print("Moving forward.")
   motor_left_PWM.ChangeDutyCycle(speed)
@@ -92,7 +93,7 @@ def move_forward(speed=10, duration=0.3):
   time.sleep(duration)
   stop_motors()
 
-def move_backward(speed=10, duration=0.3):
+def move_backward(speed=10, duration=0.6):
   """Function to move both motors in the reverse direction"""
   print("Moving backward.")
   motor_left_PWM.ChangeDutyCycle(speed)
@@ -102,7 +103,7 @@ def move_backward(speed=10, duration=0.3):
   time.sleep(duration)
   stop_motors()
   
-def turn_left(speed=9, duration=1):
+def turn_left(speed=9, duration=1.5):
   """Function to move left motor in the reverse dir. and right motor in the forward dir."""
   print("Turning left.")
   motor_left_PWM.ChangeDutyCycle(speed)
@@ -112,7 +113,7 @@ def turn_left(speed=9, duration=1):
   time.sleep(duration)
   stop_motors()
   
-def turn_right(speed=9, duration=1):
+def turn_right(speed=9, duration=1.5):
   """Function to move right motor in the reverse dir. and the left motor in the forward dir."""
   print("Turning right")
   motor_left_PWM.ChangeDutyCycle(speed)
@@ -148,22 +149,22 @@ def print_distance():
     print("Left ultrasonic sensor reading: No response")
     
   # print warning text if obstacle is less than the distance threshold and inform which side it is at.
-  if US1_reading < distance_threshold:
+  if US1_reading < front_threshold:
     print("WARNING: Obstacle detected in front of the device")
   else:
     pass
     
-  if US2_reading < distance_threshold:
+  if US2_reading < side_threshold:
     print("WARNING: Obstacle detected on the right of the device")
   else:
     pass
     
-  if US4_reading < distance_threshold:
+  if US4_reading < side_threshold:
     print("WARNING: Obstacle detected on the left of the device")
   else:
     pass      
 
-    return US1_reading, US2_reading, US4_reading
+  return US1_reading, US2_reading, US4_reading
 
 
 def mobility_system():
@@ -172,20 +173,20 @@ def mobility_system():
   US1_reading, US2_reading, US4_reading = print_distance()
 
   # move device according to the flowchart's logic
-  if US1_reading >= distance_threshold:
+  if US1_reading >= front_threshold:
     move_forward() # device moves forward #
-  elif US2_reading >= distance_threshold:
+  elif US4_reading >= side_threshold:
     turn_left() # device turns left #
-  elif US4_reading >= distance_threshold:
+  elif US2_reading >= side_threshold:
     turn_right() # device turns right #
   else:
     print("Initiating REVERSING algorithm.")
-    while US2_reading < distance_threshold or US4_reading < distance_threshold:
+    while US2_reading < side_threshold or US4_reading < side_threshold:
       move_backward() # reverse device #
-    if US2_reading >= distance_threshold:
+    if US2_reading >= side_threshold:
       move_backward(speed=10, duration=2)
       turn_left(speed=9, duration=4)
-    elif US4_reading >= distance_threshold:
+    elif US4_reading >= side_threshold:
       move_backward(speed=10, duration=2)
       turn_right(speed=9, duration=4)
 
@@ -198,6 +199,8 @@ try:
     print(f"\n-------------- Iteration: {counter} --------------")
     mobility_system()
     counter += 1
+    time.sleep(1.5)
+  
 
 except KeyboardInterrupt:
   GPIO.cleanup()
