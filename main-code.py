@@ -40,8 +40,8 @@ pump_pin = 36 # pin for the water pump
 
 IR_pin_1 = 21 # pins for the infrared sensors
 IR_pin_2 = 24
-IR_pin_3 = 23
-IR_pin_4 = 26
+IR_pin_3 = 26
+IR_pin_4 = 23
 
 US_pin_1_trig = 13# pins for the ultrasonic sensors (trig = trigger)
 US_pin_1_echo = 16
