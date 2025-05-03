@@ -150,7 +150,7 @@ motor_right_PWM.start(0) # start at neutral position
 print("The Motors' PWM has been enabled!")
 
 # define functions
-def get_distance(TRIG, ECHO): # TRIG and ECHO are parameters that will need to be replaced when calleds
+def get_distance(TRIG, ECHO): # TRIG and ECHO are parameters that will need to be replaced when called
   """Function to calculate the distance of an object that a selected US picks up"""
   # Send a pulse to TRIG
   GPIO.output(TRIG, GPIO.LOW) # ensure TRIG is low initially
