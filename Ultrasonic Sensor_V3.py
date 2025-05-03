@@ -60,15 +60,15 @@ try:
     US1_reading = get_distance(US_pin_1_trig, US_pin_1_echo)
     US2_reading = get_distance(US_pin_2_trig, US_pin_2_echo)
     US4_reading = get_distance(US_pin_4_trig, US_pin_4_echo)
-    print(f"\tFront US reading: {US1_reading}")
+    print(f"\tFront US reading: {US1_reading:.2f}")
 
     if US1_reading < distance_threshold:
       print("Obstacle detected in front of the device")
-    print(f"\tRight US reading: {US2_reading}")
+    print(f"\tRight US reading: {US2_reading:.2f}")
 
     if US2_reading < distance_threshold:
       print("Obstacle detected on the right of the device")
-    print(f"\tLeft US reading: {US4_reading}") 
+    print(f"\tLeft US reading: {US4_reading:.2f}") 
 
     if US4_reading < distance_threshold:
       print("Obstacle detected on the left of the device")
