@@ -24,34 +24,62 @@ motor_right_PWM.start(0) # start at neutral position
 print("The Motors' PWM has been enabled!")
 time.sleep(2)
 
-def left_motor_stop():
+def stop_motors():
   """Function to stop left motor"""
   motor_left_PWM.ChangeDutyCycle(0)
-  print("Left motors have been disabled!")
+  motor_right_PWM.ChangeDutyCycle(0)
+  print("Both motors have been disabled!")
 
-def left_motor_forward(speed=70, duration=0.2):
-  """Function to move left motors forward"""
+def move_forward(speed=10, duration=1):
+  """Function to move motors forward"""
   motor_left_PWM.ChangeDutyCycle(speed)
-  print("Moving left motors forward")
+  motor_right_PWM.ChangeDutyCycle(speed)
+  print("Moving motors forward")
   GPIO.output(motor_pin_left_DIR, GPIO.LOW)
-  motor_left_PWM.ChangeDutyCycle(speed) # duty cycle is in terms of percentage
-  motor_right_PWM.ChangeDutyCycle(speed)
+  GPIO.output(motor_pin_right_DIR, GPIO.LOW)
   time.sleep(duration)
-  left_motor_stop()
+  stop_motors()
 
-def left_motor_backward(speed=70, duration=0.2):
-  """Function to move left motors backward"""
+def move_backward(speed=10, duration=1):
+  """Function to move motors backward"""
   motor_left_PWM.ChangeDutyCycle(speed)
-  print("Moving left motors forward")
+  motor_right_PWM.ChangeDutyCycle(speed)          
+  print("Moving left motors backward")
   GPIO.output(motor_pin_left_DIR, GPIO.HIGH)
-  motor_left_PWM.ChangeDutyCycle(speed) # duty cycle is in terms of percentage
-  motor_right_PWM.ChangeDutyCycle(speed)
+  GPIO.output(motor_pin_right_DIR, GPIO.HIGH)
   time.sleep(duration)
-  left_motor_stop()
+  stop_motors()
+  
+def turn_left(speed=9, duration=7.7):
+  """Function to turn left"""
+  motor_left_PWM.ChangeDutyCycle(speed)
+  motor_right_PWM.ChangeDutyCycle(speed) 
+  print("Turning left")
+  GPIO.output(motor_pin_left_DIR, GPIO.HIGH)
+  GPIO.output(motor_pin_right_DIR, GPIO.LOW)
+  time.sleep(duration)
+  stop_motors()
+  
+def turn_right(speed=9, duration=7.7):
+  """Function to turn right"""
+  motor_left_PWM.ChangeDutyCycle(speed)
+  motor_right_PWM.ChangeDutyCycle(speed) 
+  print("Turning right")
+  GPIO.output(motor_pin_left_DIR, GPIO.LOW)
+  GPIO.output(motor_pin_right_DIR, GPIO.HIGH)
+  time.sleep(duration)
+  stop_motors()
 
-
-
-
+try:
+  move_forward()
+  time.sleep(2)
+  turn_left()
+  time.sleep(2)
+  move_forward()
+  time.sleep(2)
+except KeyboardInterrupt:
+  GPIO.cleanup()
+  print("Program stopped by user")
 '''
 # define functions
 def stop_motors():
@@ -88,7 +116,7 @@ def turn_left(speed=70, duration=0.1):
   motor_left_PWM.ChangeDutyCycle(speed)
   motor_right_PWM.ChangeDutyCycle(speed)
   time.sleep(duration)
-  stop_motors()
+  stop_motors
 
 def turn_right(speed=70, duration=0.1):
   """Function to move right motor in the reverse dir. and the left motor in the forward dir."""
