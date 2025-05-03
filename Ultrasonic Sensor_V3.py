@@ -8,6 +8,7 @@ US_pin_2_echo = 18
 US_pin_4_trig = 19
 US_pin_4_echo = 22
 print("... initial pins initialization complete!")
+time.sleep(1)
 
 GPIO.setmode(GPIO.BOARD)  # Use physical pin numbers 
 
@@ -19,6 +20,7 @@ GPIO.setup(US_pin_1_trig, GPIO.OUT) # setting ultrasonic trigger pins as output
 GPIO.setup(US_pin_2_trig, GPIO.OUT)
 GPIO.setup(US_pin_4_trig, GPIO.OUT)
 print ("... GPIO pins' INPUT and OUTPUT identification complete!")
+time.sleep(1)
 
 # defining distance threshold
 distance_threshold = 35 # in centimeters
@@ -60,20 +62,40 @@ try:
     US1_reading = get_distance(US_pin_1_trig, US_pin_1_echo)
     US2_reading = get_distance(US_pin_2_trig, US_pin_2_echo)
     US4_reading = get_distance(US_pin_4_trig, US_pin_4_echo)
-    print(f"\tFront US reading: {US1_reading:.2f}")
-
+    
+    print("Readings Below:")
+    
+    if US1_reading is not None:
+      print(f"\tFront US reading: {US1_reading:.2f}")
+    else:
+      print("Front US reading: No response")
+    
+    if US2_reading is not None:
+      print(f"\tRight US reading: {US2_reading:.2f}")
+    else:
+      print("Right US reading: No response")
+      
+    if US4_reading is not None:
+      print(f"\tLeft US reading: {US4_reading:.2f}")
+    else:
+      print("Left US reading: No response")
+      
     if US1_reading < distance_threshold:
       print("Obstacle detected in front of the device")
-    print(f"\tRight US reading: {US2_reading:.2f}")
-
+    else:
+      pass
+      
     if US2_reading < distance_threshold:
       print("Obstacle detected on the right of the device")
-    print(f"\tLeft US reading: {US4_reading:.2f}") 
-
+    else:
+      pass
+      
     if US4_reading < distance_threshold:
       print("Obstacle detected on the left of the device")
-    
-    time.sleep(0.2)
+    else:
+      pass      
+      
+    time.sleep(1) # use a smaller sleep duration for actually codec
 except KeyboardInterrupt:
   GPIO.cleanup()
   print("Program has been stopped by user.")
