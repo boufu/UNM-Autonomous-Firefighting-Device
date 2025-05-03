@@ -8,25 +8,16 @@ import RPi.GPIO as GPIO
 import time
 
 # initialize ir sensors to the physical pins
-IR_pin_1 = 7
-IR_pin_2 = 8
+IR_pin_1 = 8
+IR_pin_2 = 7
 IR_pin_3 = 9
 IR_pin_4 = 10
 print("IR pins initialized.")
 
 # set these pins as input
-GPIO.setmode(GPIO.board)
+GPIO.setmode(GPIO.BOARD)
 GPIO.setup(IR_pin_1, GPIO.IN) # setting infrared pins as input
-GPIO.setup(IR_pin_2, GPIO.IN)
-GPIO.setup(IR_pin_3, GPIO.IN)
-GPIO.setup(IR_pin_4, GPIO.IN)
 print("IR pins setup complete!")
-
-# setting global variables for the IR_sensors readings
-IR_sensor_1 = GPIO.LOW # setting all the IR sensors reading to be low initially
-IR_sensor_2 = GPIO.LOW
-IR_sensor_3 = GPIO.LOW
-IR_sensor_4 = GPIO.LOW
 
 
 # create fire detection flag
@@ -34,15 +25,8 @@ fire_detected = False # initial flag's state
 print("Fire detection flag initialized and set to FALSE")
 
 def test_IR():
-  IR_sensor_1 = GPIO.input(IR_pin_1)
-  IR_sensor_2 = GPIO.input(IR_pin_2)
-  IR_sensor_3 = GPIO.input(IR_pin_3)
-  IR_sensor_3 = GPIO.input(IR_pin_4)
-
-  if IR_sensor_1 == GPIO.HIGH:
-    print ("IR reading is HIGH!")
-  else:
-    print("No IR reading received")
+	IR_sensor_1 = GPIO.input(IR_pin_1)
+	print(f"IR input is {IR_sensor_1}")
 
 try:
   while True:
