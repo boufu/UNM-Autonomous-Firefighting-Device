@@ -34,28 +34,26 @@ import adafruit_ads1x15.ads1115 as ADS # give the adafruit library for ads1115 a
 
 print("Initial pins initialization start...")
 
-servo_pin = 33 # pin for the nozzle's servo motor 
+servo_pin = 32 # pin for the nozzle's servo motor 
 
-pump_pin = 7 # pin for the water pump
+pump_pin = 36 # pin for the water pump
 
-IR_pin_1 =  # pins for the infrared sensors
-IR_pin_2 = 
-IR_pin_3 =
-IR_pin_4 = 
+IR_pin_1 = 21 # pins for the infrared sensors
+IR_pin_2 = 24
+IR_pin_3 = 23
+IR_pin_4 = 26
 
-US_pin_1_trig = # pins for the ultrasonic sensors (trig = trigger)
-US_pin_1_echo =
-US_pin_2_trig =
-US_pin_2_echo = 
-US_pin_3_trig = 
-US_pin_3_echo = 
-US_pin_4_trig = 
-US_pin_4_echo = 
+US_pin_1_trig = 13# pins for the ultrasonic sensors (trig = trigger)
+US_pin_1_echo = 16
+US_pin_2_trig = 15
+US_pin_2_echo = 18
+US_pin_4_trig = 19
+US_pin_4_echo = 22
 
-motor_pin_left_PWM = # pins for the motor
-motor_pin_left_DIR = 
-motor_pin_right_PWM = 
-motor_pin_right_DIR = 
+motor_pin_left_PWM = 33 # pins for the motor
+motor_pin_left_DIR = 29
+motor_pin_right_PWM = 35
+motor_pin_right_DIR = 31
 
 print("... initial pins initialization complete!")
 # ===========================================================================================
@@ -74,12 +72,10 @@ GPIO.setup(IR_pin_4, GPIO.IN)
 
 GPIO.setup(US_pin_1_echo, GPIO.IN) # setting ultrasonic echo pins as input
 GPIO.setup(US_pin_2_echo, GPIO.IN)
-GPIO.setup(US_pin_3_echo, GPIO.IN)
 GPIO.setup(US_pin_4_echo, GPIO.IN)
 
 GPIO.setup(US_pin_1_trig, GPIO.OUT) # setting ultrasonic trigger pins as output
 GPIO.setup(US_pin_2_trig, GPIO.OUT)
-GPIO.setup(US_pin_3_trig, GPIO.OUT)
 GPIO.setup(US_pin_4_trig, GPIO.OUT)
 
 GPIO.setup(motor_pin_left_PWM, GPIO.OUT) # setting motor pins PWM and DIR as output
@@ -234,15 +230,13 @@ def turn_right(speed=70, duration=0.1):
 def mobility_system():
   """Basic autonomous navigation of the device"""
   if get_distance(US_pin_1_trig, US_pin_1_echo) >= distance_threshold:
-    move_forward # device moves forward #
+    move_forward() # device moves forward #
   elif get_distance(US_pin_4_trig, US_pin_4_echo) >= distance_threshold:
-    turn_left # device turns left #
+    turn_left() # device turns left #
   elif get_distance(US_pin_2_trig, US_pin_2_echo) >= distance_threshold:
-    turn_right # device turns right #
-  elif get_distance(US_pin_3_trig, US_pin_3_echo) >= distance_threshold:
-    move_backward # reverse device #
+    turn_right() # device turns right #
   else:
-    pass # sound an alarm #
+    move_backward() # reverse device #
 
 # ===========================================================================================
 # [WIP] Fire Detection System # need an analog-digital converter if want to read IR value range
