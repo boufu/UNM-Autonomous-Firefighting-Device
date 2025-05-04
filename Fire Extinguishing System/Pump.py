@@ -3,7 +3,7 @@ import RPi.GPIO as GPIO
 import time
 
 # initialize pins
-pump_pin = 11
+pump_pin = 36 # pin for the water pump
 print("Pins initialized")
 
 # setting up the pins
