@@ -35,6 +35,7 @@ time.sleep(1)
 
 # defining distance threshold
 front_threshold = 80 # in centimeters
+front_threshold_during_turn = 200
 side_threshold = 110
 
 # initialize PWM for motor PWM pins
@@ -83,7 +84,7 @@ def stop_motors():
   motor_right_PWM.ChangeDutyCycle(0)
   print("Both motors have been disabled!")
 
-def move_forward(speed=10, max_time=3):
+def move_forward_until_blocked(speed=10, max_time=3):
     print("Moving forward until an obstacle is detected...")
     start_time = time.time()
 
@@ -107,17 +108,6 @@ def move_forward(speed=10, max_time=3):
 
     stop_motors()
 
-
-def move_forward(speed=10, duration=0.6):
-  """Function to move both motors in the forward direction"""
-  print("Moving forward.")
-  motor_left_PWM.ChangeDutyCycle(speed)
-  motor_right_PWM.ChangeDutyCycle(speed)
-  GPIO.output(motor_pin_left_DIR, GPIO.LOW)
-  GPIO.output(motor_pin_right_DIR, GPIO.LOW)
-  time.sleep(duration)
-  stop_motors()
-
 def move_backward(speed=10, duration=0.6):
   """Function to move both motors in the reverse direction"""
   print("Moving backward.")
@@ -128,19 +118,18 @@ def move_backward(speed=10, duration=0.6):
   time.sleep(duration)
   stop_motors()
   
-def turn_left(speed=9, max_turn_time=1.8):
+def turn_left_until_clear(speed=9, max_turn_time=3):
     """Turn left until front path is clear or max_turn_time is exceeded."""
     print("Turning left until front is clear...")
 
-    # NEW: Start turning
     motor_left_PWM.ChangeDutyCycle(speed)
     motor_right_PWM.ChangeDutyCycle(speed)
     GPIO.output(motor_pin_left_DIR, GPIO.HIGH)
     GPIO.output(motor_pin_right_DIR, GPIO.LOW)
 
-    start_time = time.time()  # NEW: Start timer
+    start_time = time.time() 
 
-    while True:  # NEW: Loop until front is clear or timeout
+    while True:  
         front = get_distance(US_pin_1_trig, US_pin_1_echo)
 
         if front is not None and front >= front_threshold:
@@ -153,33 +142,20 @@ def turn_left(speed=9, max_turn_time=1.8):
 
         time.sleep(0.1)
 
-    stop_motors()  # Changed: moved stop_motors here so it only stops *after* loop ends
-
-
-
-def turn_left(speed=9, duration=1.5):
-  """Function to move left motor in the reverse dir. and right motor in the forward dir."""
-  print("Turning left.")
-  motor_left_PWM.ChangeDutyCycle(speed)
-  motor_right_PWM.ChangeDutyCycle(speed) 
-  GPIO.output(motor_pin_left_DIR, GPIO.HIGH)
-  GPIO.output(motor_pin_right_DIR, GPIO.LOW)
-  time.sleep(duration)
-  stop_motors()
+    stop_motors()  
   
-def turn_right(speed=9, max_turn_time=1.8):
+def turn_right_until_clear(speed=9, max_turn_time=3):
     """Turn right until front path is clear or max_turn_time is exceeded."""
     print("Turning right until front is clear...")
 
-    # NEW: Start turning
     motor_left_PWM.ChangeDutyCycle(speed)
     motor_right_PWM.ChangeDutyCycle(speed)
     GPIO.output(motor_pin_left_DIR, GPIO.LOW)
     GPIO.output(motor_pin_right_DIR, GPIO.HIGH)
 
-    start_time = time.time()  # NEW: Start timer
+    start_time = time.time() 
 
-    while True:  # NEW: Loop until front is clear or timeout
+    while True: 
         front = get_distance(US_pin_1_trig, US_pin_1_echo)
 
         if front is not None and front >= front_threshold:
@@ -193,18 +169,6 @@ def turn_right(speed=9, max_turn_time=1.8):
         time.sleep(0.1)
 
     stop_motors()  # Changed: moved stop_motors here so it only stops *after* loop ends
-
-
-
-def turn_right(speed=9, duration=1.5):
-  """Function to move right motor in the reverse dir. and the left motor in the forward dir."""
-  print("Turning right")
-  motor_left_PWM.ChangeDutyCycle(speed)
-  motor_right_PWM.ChangeDutyCycle(speed) 
-  GPIO.output(motor_pin_left_DIR, GPIO.LOW)
-  GPIO.output(motor_pin_right_DIR, GPIO.HIGH)
-  time.sleep(duration)
-  stop_motors()
 
 def print_distance():
   """Prints the calculated distance of each ultrasonic sensor"""
@@ -250,18 +214,18 @@ def print_distance():
   return US1_reading, US2_reading, US4_reading
 
 def mobility_system():
-    """Improved autonomous navigation logic with continuous movement and smarter turns."""
+    """Basic autonomous navigation logic"""
 
     US1_reading, US2_reading, US4_reading = print_distance()
 
     if US1_reading is not None and US1_reading >= front_threshold:
-        move_forward()  # CHANGED: smoother, continuous forward motion
+        move_forward_until_blocked()  
 
     elif US4_reading is not None and US4_reading >= side_threshold:
-        turn_left()  # CHANGED: uses new sensor-based turn with failsafe
+        turn_left_until_clear()  
 
     elif US2_reading is not None and US2_reading >= side_threshold:
-        turn_right()  # CHANGED: uses new sensor-based turn with failsafe
+        turn_right_until_clear()  
 
     else:
         print("Initiating REVERSING algorithm...")
@@ -273,37 +237,13 @@ def mobility_system():
         US1_reading, US2_reading, US4_reading = print_distance()
 
         if US4_reading is not None and US4_reading >= side_threshold:
-            turn_left()
+            move_backward(speed=10, duration=1)
+            turn_left_until_clear()
         elif US2_reading is not None and US2_reading >= side_threshold:
-            turn_right()
+            move_backward(speed=10, duration=1)
+            turn_right_until_clear()
         else:
             print("Still boxed in — trying again.")
-
-
-
-
-def mobility_system():
-  """Basic autonomous navigation of the system"""
-  # assign a local variable to the readings from the "print_distance()" function
-  US1_reading, US2_reading, US4_reading = print_distance()
-
-  # move device according to the flowchart's logic
-  if US1_reading >= front_threshold:
-    move_forward() # device moves forward #
-  elif US4_reading >= side_threshold:
-    turn_left() # device turns left #
-  elif US2_reading >= side_threshold:
-    turn_right() # device turns right #
-  else:
-    print("Initiating REVERSING algorithm.")
-    while US2_reading < side_threshold or US4_reading < side_threshold:
-      move_backward() # reverse device #
-    if US2_reading >= side_threshold:
-      move_backward(speed=10, duration=2)
-      turn_left(speed=9, duration=4)
-    elif US4_reading >= side_threshold:
-      move_backward(speed=10, duration=2)
-      turn_right(speed=9, duration=4)
 
 # main loop
 
@@ -314,7 +254,6 @@ try:
     print(f"\n-------------- Iteration: {counter} --------------")
     mobility_system()
     counter += 1
-    time.sleep(1.5)
   
 
 except KeyboardInterrupt:
