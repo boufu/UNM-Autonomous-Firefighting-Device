@@ -13,13 +13,9 @@
 # importing libraries - might show yellow squiggly lines below...
 # because I need to download the packages on the RBPi hardware, not on my own laptop.
 import RPi.GPIO as GPIO # import GPi.GPIO package and alias it as GPIO
-from gpiozero import Servo # import servo from gpiozero module 
 from gpiozero import Angularservo
 import time
 import board # import library that gives names to the RB Pi's physical pins
-import busio # import library that enables I2C communication
-from adafruit_ads1x15.analog_in import Analogin # import the analogin library from adafruit
-import adafruit_ads1x15.ads1115 as ADS # give the adafruit library for ads1115 an alias called ADS
 
 # ===========================================================================================
 # defining variables (pins in this case)
