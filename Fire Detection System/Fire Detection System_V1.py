@@ -43,8 +43,13 @@ def fire_detection_loop():
   IR2_reading = GPIO.input(IR_pin_2)
   IR3_reading = GPIO.input(IR_pin_3)
   IR4_reading = GPIO.input(IR_pin_4)
+  print(f"IR1 input is {IR1_reading}")
+  print(f"IR2 input is {IR2_reading}")
+  print(f"IR3 input is {IR3_reading}")
+  print(f"IR4 input is {IR4_reading}")
 
-  if any( > threshold for ir_sensors in [, , , ]): # for all sensos above the threshold, fire_detected flag changes to True, otherwise change to False
+  if any(IR_sensors == 0 for IR_sensors in [IR1_reading, IR2_reading, IR3_reading, IR4_reading]): # for all sensors above the threshold, fire_detected flag changes to True, otherwise change to False
     fire_detected = True
   else:
     fire_detected = False
+
