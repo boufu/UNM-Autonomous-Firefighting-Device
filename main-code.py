@@ -13,9 +13,9 @@
 # importing libraries - might show yellow squiggly lines below...
 # because I need to download the packages on the RBPi hardware, not on my own laptop.
 import RPi.GPIO as GPIO # import GPi.GPIO package and alias it as GPIO
-from gpiozero import Angularservo
+from gpiozero import AngularServo
 import time
-import board # import library that gives names to the RB Pi's physical pins
+GPIO.cleanup()
 
 # ===========================================================================================
 # defining variables (pins in this case)
@@ -57,7 +57,7 @@ print("... initial pins initialization complete!")
 # ===========================================================================================
 print ("GPIO pins' INPUT and OUTPUT identification start...")
 
-GPIO.setmode(GPIO.BOARD)  # Use physical pin numbers 
+GPIO.setmode(GPIO.BOARD) # Use physical pin numbers 
 
 GPIO.setup(pump_pin, GPIO.OUT) # setting pump pin as output
 
@@ -178,7 +178,7 @@ def stop_motors():
     motor_right_PWM.ChangeDutyCycle(0)
     print("Both motors have been disabled!")
 
-def move_forward(speed=4, duration=0.8):
+def move_forward(speed=4, duration=0.6):
     """Function to move both motors in the forward direction"""
     print("Moving forward.")
     motor_left_PWM.ChangeDutyCycle(speed)
@@ -198,7 +198,7 @@ def move_backward(speed=3, duration=2):
     time.sleep(duration)
     stop_motors()
   
-def turn_left(speed=9, duration=0.7):
+def turn_left(speed=9, duration=0.9):
   """Function to slightly turn left"""
   print("Turn left slightly.")
   motor_left_PWM.ChangeDutyCycle(speed)
@@ -208,7 +208,7 @@ def turn_left(speed=9, duration=0.7):
   time.sleep(duration)
   stop_motors()
   
-def turn_right(speed=9, duration=0.7):
+def turn_right(speed=9, duration=0.9):
   """Function to slightly turn right"""
   print("Turn right slightly.")
   motor_left_PWM.ChangeDutyCycle(speed)
@@ -321,7 +321,7 @@ def mobility_system():
         time.sleep(0.1)
         move_forward()  
         
-        if US4_reading <= 120: # if left wall is within 1.2 m
+        if US4_reading <= 100: # if left wall is within 1 m
           
           if US4_reading < side_threshold - 5:
             print("Left wall is too close.")
@@ -375,6 +375,8 @@ def mobility_system():
 # ===========================================================================================
 # Fire Detection System 
 # ===========================================================================================
+
+fire_detected = False # fire_detected flag initial state
 
 def turn_left_until_fire_detected(speed=9):
     """Turn left until fire detected in front"""
@@ -460,6 +462,7 @@ def fire_extinguishing_start():
 
   elif IR2_reading == 0:
     turn_right_until_fire_detected()
+    turn_right
     IR_check = False
     while IR_check == False:
       pump_and_servo_start() # start servo and pump
@@ -514,7 +517,6 @@ try:
         fire_extinguishing_start() # the extinguishment will happen
         fire_detection_loop() # and the fire detection will follow suit
     counter += 1
-    time.sleep(1)
 except KeyboardInterrupt:
   GPIO.cleanup()
   print("\nProgram stopped by user.")
