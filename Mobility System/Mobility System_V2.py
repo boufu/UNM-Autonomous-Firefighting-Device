@@ -34,9 +34,9 @@ print ("... GPIO pins' INPUT and OUTPUT identification complete!")
 time.sleep(1)
 
 # defining distance threshold
-front_threshold = 80 # in centimeters
-front_threshold_during_turn = 200
-side_threshold = 110
+front_threshold = 40 # in centimeters
+front_threshold_during_turn = 50
+side_threshold = 40
 
 # initialize PWM for motor PWM pins
 motor_left_PWM = GPIO.PWM(motor_pin_left_PWM, 200) # 200 Hz PWM
@@ -79,46 +79,53 @@ def get_distance(TRIG, ECHO): # TRIG and ECHO are parameters that will need to b
   return distance
 
 def stop_motors():
-  """Function to stop motors"""
-  motor_left_PWM.ChangeDutyCycle(0)
-  motor_right_PWM.ChangeDutyCycle(0)
-  print("Both motors have been disabled!")
+    """Function to stop motors"""
+    motor_left_PWM.ChangeDutyCycle(0)
+    motor_right_PWM.ChangeDutyCycle(0)
+    print("Both motors have been disabled!")
 
-def move_forward_until_blocked(speed=10, max_time=3):
-    print("Moving forward until an obstacle is detected...")
-    start_time = time.time()
-
+def move_forward(speed=4, duration=0.8):
+    """Function to move both motors in the forward direction"""
+    print("Moving forward.")
     motor_left_PWM.ChangeDutyCycle(speed)
     motor_right_PWM.ChangeDutyCycle(speed)
     GPIO.output(motor_pin_left_DIR, GPIO.LOW)
     GPIO.output(motor_pin_right_DIR, GPIO.LOW)
-
-    while True:
-        front = get_distance(US_pin_1_trig, US_pin_1_echo)
-
-        if front is not None and front < front_threshold:
-            print(f"Obstacle detected at {front:.2f} cm — stopping.")
-            break
-
-        if time.time() - start_time > max_time:
-            print("Max forward time reached — stopping.")
-            break
-
-        time.sleep(0.1)
-
+    time.sleep(duration)
     stop_motors()
 
-def move_backward(speed=10, duration=0.6):
-  """Function to move both motors in the reverse direction"""
-  print("Moving backward.")
+def move_backward(speed=3, duration=2):
+    """Function to move both motors in the reverse direction"""
+    print("Moving backward.")
+    motor_left_PWM.ChangeDutyCycle(speed)
+    motor_right_PWM.ChangeDutyCycle(speed)         
+    GPIO.output(motor_pin_left_DIR, GPIO.HIGH)
+    GPIO.output(motor_pin_right_DIR, GPIO.HIGH)
+    time.sleep(duration)
+    stop_motors()
+  
+def turn_left(speed=9, duration=0.7):
+  """Function to slightly turn left"""
+  print("Turn left slightly.")
   motor_left_PWM.ChangeDutyCycle(speed)
   motor_right_PWM.ChangeDutyCycle(speed)         
   GPIO.output(motor_pin_left_DIR, GPIO.HIGH)
-  GPIO.output(motor_pin_right_DIR, GPIO.HIGH)
+  GPIO.output(motor_pin_right_DIR, GPIO.LOW)
   time.sleep(duration)
   stop_motors()
   
-def turn_left_until_clear(speed=9, max_turn_time=3):
+def turn_right(speed=9, duration=0.7):
+  """Function to slightly turn right"""
+  print("Turn right slightly.")
+  motor_left_PWM.ChangeDutyCycle(speed)
+  motor_right_PWM.ChangeDutyCycle(speed)         
+  GPIO.output(motor_pin_left_DIR, GPIO.LOW)
+  GPIO.output(motor_pin_right_DIR, GPIO.HIGH)
+  time.sleep(duration)
+  stop_motors()
+    
+  
+def turn_left_until_clear(speed=9, max_turn_time=10):
     """Turn left until front path is clear or max_turn_time is exceeded."""
     print("Turning left until front is clear...")
 
@@ -132,7 +139,7 @@ def turn_left_until_clear(speed=9, max_turn_time=3):
     while True:  
         front = get_distance(US_pin_1_trig, US_pin_1_echo)
 
-        if front is not None and front >= front_threshold:
+        if front is not None and front >= front_threshold_during_turn:
             print(f"Front is clear: {front:.2f} cm")
             break
 
@@ -140,11 +147,10 @@ def turn_left_until_clear(speed=9, max_turn_time=3):
             print("Max turn time reached — breaking loop.")
             break
 
-        time.sleep(0.1)
-
+    time.sleep(3)
     stop_motors()  
   
-def turn_right_until_clear(speed=9, max_turn_time=3):
+def turn_right_until_clear(speed=9, max_turn_time=10):
     """Turn right until front path is clear or max_turn_time is exceeded."""
     print("Turning right until front is clear...")
 
@@ -158,7 +164,7 @@ def turn_right_until_clear(speed=9, max_turn_time=3):
     while True: 
         front = get_distance(US_pin_1_trig, US_pin_1_echo)
 
-        if front is not None and front >= front_threshold:
+        if front is not None and front >= front_threshold_during_turn:
             print(f"Front is clear: {front:.2f} cm")
             break
 
@@ -166,8 +172,7 @@ def turn_right_until_clear(speed=9, max_turn_time=3):
             print("Max turn time reached — breaking loop.")
             break
 
-        time.sleep(0.1)
-
+    time.sleep(3)
     stop_motors()  # Changed: moved stop_motors here so it only stops *after* loop ends
 
 def print_distance():
@@ -219,31 +224,59 @@ def mobility_system():
     US1_reading, US2_reading, US4_reading = print_distance()
 
     if US1_reading is not None and US1_reading >= front_threshold:
-        move_forward_until_blocked()  
-
-    elif US4_reading is not None and US4_reading >= side_threshold:
-        turn_left_until_clear()  
-
-    elif US2_reading is not None and US2_reading >= side_threshold:
-        turn_right_until_clear()  
-
-    else:
-        print("Initiating REVERSING algorithm...")
+        time.sleep(0.1)
+        move_forward()  
         
-        # CHANGED: Move backward a bit before retrying
-        move_backward(speed=10, duration=1)
+        if US4_reading <= 120: # if left wall is within 1.2 m
+          
+          if US4_reading < side_threshold - 5:
+            print("Left wall is too close.")
+            turn_right()
+          elif US4_reading > side_threshold + 5:
+            print("Left wall is too far.")
+            turn_left()
 
-        # Refresh distances after moving back
-        US1_reading, US2_reading, US4_reading = print_distance()
+      
+    elif US1_reading is not None and US1_reading < front_threshold:
 
-        if US4_reading is not None and US4_reading >= side_threshold:
-            move_backward(speed=10, duration=1)
+      if US2_reading is not None and US4_reading is not None:
+        
+        if US4_reading >= side_threshold and US2_reading >= side_threshold:
+          if US4_reading > US2_reading:
+            print("Left wall further than right wall.")
             turn_left_until_clear()
-        elif US2_reading is not None and US2_reading >= side_threshold:
-            move_backward(speed=10, duration=1)
+          elif US2_reading > US4_reading:
+            print("Right wall further than left wall.")
             turn_right_until_clear()
+          elif US2_reading == US4_reading:
+            print("Left wall same distance to the right wall.")
+            turn_left_until_clear()
+            
+        elif US4_reading < side_threshold and US2_reading >= side_threshold:
+          print("Obstacle detected close on the left!")
+          turn_right_until_clear()
+        
+        elif US2_reading < side_threshold and US4_reading >= side_threshold:
+          print("Obstacle detected close on the right!")
+          turn_left_until_clear()
+        
         else:
-            print("Still boxed in — trying again.")
+          print("Initiating REVERSING algorithm...")
+          
+          # CHANGED: Move backward a bit before retrying
+          move_backward(speed=10, duration=1)
+
+          # Refresh distances after moving back
+          US1_reading, US2_reading, US4_reading = print_distance()
+
+          if US4_reading is not None and US4_reading >= side_threshold:
+              move_backward(speed=10, duration=1)
+              turn_left_until_clear()
+          elif US2_reading is not None and US2_reading >= side_threshold:
+              move_backward(speed=10, duration=1)
+              turn_right_until_clear()
+          else:
+              print("Still boxed in — trying again.")
 
 # main loop
 
@@ -254,6 +287,7 @@ try:
     print(f"\n-------------- Iteration: {counter} --------------")
     mobility_system()
     counter += 1
+    time.sleep(1)
   
 
 except KeyboardInterrupt:
