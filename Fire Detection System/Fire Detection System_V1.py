@@ -37,19 +37,140 @@ time.sleep(1)
 fire_detected = False # initial flag's state
 
 # define functions
+
+def stop_motors():
+  """Function to stop motors"""
+  motor_left_PWM.ChangeDutyCycle(0)
+  motor_right_PWM.ChangeDutyCycle(0)
+  print("Both motors have been disabled!")
+
+def turn_left_until_fire_detected(speed=9):
+    """Turn left until fire detected in front"""
+    print("Turning left until fire is in front...")
+
+    motor_left_PWM.ChangeDutyCycle(speed)
+    motor_right_PWM.ChangeDutyCycle(speed)
+    GPIO.output(motor_pin_left_DIR, GPIO.HIGH)
+    GPIO.output(motor_pin_right_DIR, GPIO.LOW)
+
+    start_time = time.time() 
+
+    while True:  
+        IR1_reading = GPIO.input(IR_pin_1)
+        print(f"Front IR input is {IR1_reading}")
+
+        if IR1_reading == 0:
+            print("Fire is at the front — breaking loop.")
+            break
+
+        time.sleep(0.05)
+
+    stop_motors()  
+
+def turn_right_until_fire_detected(speed=9):
+    """Turn right until fire detected in front"""
+    print("Turning right until fire is in front...")
+
+    motor_left_PWM.ChangeDutyCycle(speed)
+    motor_right_PWM.ChangeDutyCycle(speed)
+    GPIO.output(motor_pin_left_DIR, GPIO.LOW)
+    GPIO.output(motor_pin_right_DIR, GPIO.HIGH)
+
+    start_time = time.time() 
+
+    while True:  
+        IR1_reading = GPIO.input(IR_pin_1)
+        print(f"Front IR input is {IR1_reading}")
+
+        if IR1_reading == 0:
+            print("Fire is at the front — breaking loop.")
+            break
+
+        time.sleep(0.05)
+
+    stop_motors()  
+
 def fire_detection_loop():
   """Read IR sensors and compare against threshold value to detect fire and set off a flag"""
   IR1_reading = GPIO.input(IR_pin_1)
   IR2_reading = GPIO.input(IR_pin_2)
   IR3_reading = GPIO.input(IR_pin_3)
   IR4_reading = GPIO.input(IR_pin_4)
-  print(f"IR1 input is {IR1_reading}")
-  print(f"IR2 input is {IR2_reading}")
-  print(f"IR3 input is {IR3_reading}")
-  print(f"IR4 input is {IR4_reading}")
+  print(f"Front IR input is {IR1_reading}")
+  print(f"Right IR input is {IR2_reading}")
+  print(f"Rear IR input is {IR3_reading}")
+  print(f"Left IR input is {IR4_reading}")
 
   if any(IR_sensors == 0 for IR_sensors in [IR1_reading, IR2_reading, IR3_reading, IR4_reading]): # for all sensors above the threshold, fire_detected flag changes to True, otherwise change to False
     fire_detected = True
   else:
     fire_detected = False
+  
+  return IR1_reading, IR2_reading, IR3_reading, IR4_reading, fire_detected
+
+def fire_extinguishing_start():
+  IR1_reading, IR2_reading, IR3_reading, IR4_reading, fire_detected = fire_detection_loop()
+  
+  if IR1_reading == 0:
+    IR_check = False
+    while IR_check == False:
+      pass # start servo and pump
+      IR1_reading = GPIO.input(IR_pin_1)
+      print(f"Front IR input is {IR1_reading}")
+
+      if IR1_reading == 1:
+        IR_check = True
+
+  elif IR2_reading == 0:
+    turn_right_until_fire_detected()
+    IR_check = False
+    while IR_check == False:
+      pass # start servo and pump
+      IR1_reading = GPIO.input(IR_pin_1)
+      print(f"Front IR input is {IR1_reading}")
+
+      if IR1_reading == 1:
+        IR_check = True
+      
+  elif IR3_reading == 0:
+    turn_right_until_fire_detected()
+    IR_check = False
+    while IR_check == False:
+      pass # start servo and pump
+      IR1_reading = GPIO.input(IR_pin_1)
+      print(f"Front IR input is {IR1_reading}")
+
+      if IR1_reading == 1:
+        IR_check = True
+
+  elif IR4_reading == 0:
+    turn_left_until_fire_detected()
+    pass # start servo and pump
+    IR_check = False
+    while IR_check == False:
+      pass # start servo and pump
+      IR1_reading = GPIO.input(IR_pin_1)
+      print(f"Front IR input is {IR1_reading}")
+
+      if IR1_reading == 1:
+        IR_check = True
+
+  print("Fire successfully put out.")
+
+try:
+  while True:
+    print(f"\n-------------- Iteration: {counter} --------------")
+    if fire_detected == False: # if fire is not detected
+      fire_detection_loop() # and fire detection follows suit
+    elif fire_detected == True: # however, the moment a fire is detected
+      while fire_detected == True: # while the fire_detected flag is True
+        fire_extinguishing_start() # the extinguishment will happen
+        fire_detection_loop() # and the fire detection will follow suit 
+    counter += 1
+  
+
+except KeyboardInterrupt:
+  GPIO.cleanup()
+  print("Program stopped by user.")
+  
 
