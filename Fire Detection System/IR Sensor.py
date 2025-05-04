@@ -23,14 +23,15 @@ GPIO.setup(IR_pin_4, GPIO.IN)
 print("IR pins setup complete!")
 
 def test_IR():
-	IR_sensor_1 = GPIO.input(IR_pin_1)
+  IR_sensor_1 = GPIO.input(IR_pin_1)
   IR_sensor_2 = GPIO.input(IR_pin_2)
   IR_sensor_3 = GPIO.input(IR_pin_3)
   IR_sensor_4 = GPIO.input(IR_pin_4)
-	print(f"IR input is {IR_sensor_1}")
+  print(f"IR1 input is {IR_sensor_1}")
+  print(f"IR2 input is {IR_sensor_2}")
+  print(f"IR3 input is {IR_sensor_3}")
+  print(f"IR4 input is {IR_sensor_4}")
   time.sleep(1)
-  
-
 
 try:
   while True:
