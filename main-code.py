@@ -464,7 +464,7 @@ def fire_extinguishing_start():
 
   elif IR2_reading == 0:
     turn_right_until_fire_detected()
-    turn_right()
+    turn_right(duration=1.7)
     IR_check = False
     while IR_check == False:
       pump_and_servo_start() # start servo and pump
@@ -477,7 +477,7 @@ def fire_extinguishing_start():
       
   elif IR3_reading == 0:
     turn_right_until_fire_detected()
-    turn_left()
+    turn_left(duration=1.7)
     IR_check = False
     while IR_check == False:
       pump_and_servo_start() # start servo and pump
