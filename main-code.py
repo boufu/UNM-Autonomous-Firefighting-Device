@@ -320,6 +320,8 @@ def mobility_system():
     if US1_reading is not None and US1_reading >= front_threshold:
         time.sleep(0.1)
         move_forward()  
+
+        US4_reading = get_distance(US_pin_4_trig, US_pin_4_echo) # read new left ultrasonic sensor distance
         
         if US4_reading <= 100: # if left wall is within 1 m
           
@@ -364,10 +366,10 @@ def mobility_system():
           US1_reading, US2_reading, US4_reading = print_distance()
 
           if US4_reading is not None and US4_reading >= side_threshold:
-              move_backward(speed=10, duration=1)
+              move_backward(speed=10, duration=3)
               turn_left_until_clear()
           elif US2_reading is not None and US2_reading >= side_threshold:
-              move_backward(speed=10, duration=1)
+              move_backward(speed=10, duration=3)
               turn_right_until_clear()
           else:
               print("Still boxed in — trying again.")
@@ -462,7 +464,7 @@ def fire_extinguishing_start():
 
   elif IR2_reading == 0:
     turn_right_until_fire_detected()
-    turn_right
+    turn_right()
     IR_check = False
     while IR_check == False:
       pump_and_servo_start() # start servo and pump
@@ -475,6 +477,7 @@ def fire_extinguishing_start():
       
   elif IR3_reading == 0:
     turn_right_until_fire_detected()
+    turn_left()
     IR_check = False
     while IR_check == False:
       pump_and_servo_start() # start servo and pump
