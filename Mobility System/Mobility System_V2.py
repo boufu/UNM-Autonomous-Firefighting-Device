@@ -33,6 +33,9 @@ GPIO.setup(motor_pin_right_DIR, GPIO.OUT)
 print ("... GPIO pins' INPUT and OUTPUT identification complete!")
 time.sleep(1)
 
+# ===========================================================================================
+# Mobility System 
+# ===========================================================================================
 # defining distance threshold
 front_threshold = 40 # in centimeters
 front_threshold_during_turn = 50
@@ -84,7 +87,7 @@ def stop_motors():
     motor_right_PWM.ChangeDutyCycle(0)
     print("Both motors have been disabled!")
 
-def move_forward(speed=4, duration=0.8):
+def move_forward(speed=5, duration=10):
     """Function to move both motors in the forward direction"""
     print("Moving forward.")
     motor_left_PWM.ChangeDutyCycle(speed)
@@ -104,7 +107,7 @@ def move_backward(speed=3, duration=2):
     time.sleep(duration)
     stop_motors()
   
-def turn_left(speed=9, duration=0.7):
+def turn_left(speed=9, duration=0.9):
   """Function to slightly turn left"""
   print("Turn left slightly.")
   motor_left_PWM.ChangeDutyCycle(speed)
@@ -114,7 +117,7 @@ def turn_left(speed=9, duration=0.7):
   time.sleep(duration)
   stop_motors()
   
-def turn_right(speed=9, duration=0.7):
+def turn_right(speed=9, duration=0.9):
   """Function to slightly turn right"""
   print("Turn right slightly.")
   motor_left_PWM.ChangeDutyCycle(speed)
@@ -226,8 +229,10 @@ def mobility_system():
     if US1_reading is not None and US1_reading >= front_threshold:
         time.sleep(0.1)
         move_forward()  
+
+        US4_reading = get_distance(US_pin_4_trig, US_pin_4_echo) # read new left ultrasonic sensor distance
         
-        if US4_reading <= 120: # if left wall is within 1.2 m
+        if US4_reading <= 100: # if left wall is within 1 m
           
           if US4_reading < side_threshold - 5:
             print("Left wall is too close.")
@@ -270,10 +275,10 @@ def mobility_system():
           US1_reading, US2_reading, US4_reading = print_distance()
 
           if US4_reading is not None and US4_reading >= side_threshold:
-              move_backward(speed=10, duration=1)
+              move_backward(speed=10, duration=3)
               turn_left_until_clear()
           elif US2_reading is not None and US2_reading >= side_threshold:
-              move_backward(speed=10, duration=1)
+              move_backward(speed=10, duration=3)
               turn_right_until_clear()
           else:
               print("Still boxed in — trying again.")
